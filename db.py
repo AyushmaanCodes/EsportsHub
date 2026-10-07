@@ -9,7 +9,6 @@ DB_CONFIG = {
 def init_db():
     conn = mysql.connector.connect(**DB_CONFIG)
     cur = conn.cursor()
-    
     cur.execute("CREATE DATABASE IF NOT EXISTS esportshub;")
     cur.execute("USE esportshub;")
     
@@ -29,7 +28,6 @@ def init_db():
 
 def get_connection():
     init_db()
-    
     config = DB_CONFIG.copy()
     config["database"] = "esportshub"
     return mysql.connector.connect(**config)
