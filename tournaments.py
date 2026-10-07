@@ -1,10 +1,7 @@
 # tournaments.py - Tournament & Match Management module
 # Functions: create_tournament, view_tournaments, schedule_match,
-#            declare_winner, delete_match, tournaments_menu
+#            declare_match_winner, delete_match, delete_tournament, tournaments_menu
 # Owner: Priyanshu
-# tournaments.py - Tournament & Match Management module
-# Functions: create_tournament, view_tournaments, schedule_match,
-#            declare_match_winner, delete_match, tournaments_menu
 
 import mysql.connector
 
@@ -50,7 +47,6 @@ def view_tournaments(conn):
 
 #view matches
 def _view_matches(conn, tournament_id=None):
-    """Internal helper: list matches, optionally filtered to one tournament."""
     cur = conn.cursor()
     query = """
         SELECT m.match_id, t1.team_name, t2.team_name, w.team_name, tr.tournament_name
@@ -178,6 +174,21 @@ def delete_match(conn):
     print("Match deleted." if cur.rowcount else "No match with that ID.")
     cur.close()
 
+#delete tournament
+def delete_tournament(conn):
+    if not view_tournaments(conn):
+        return
+    tournament_id = input("Tournament ID to delete: ").strip()
+    if not tournament_id.isdigit():
+        print("Enter a valid number.")
+        return
+    if input("This also deletes all matches in this tournament. Sure? (y/n): ").lower() != "y":
+        return
+    cur = conn.cursor()
+    cur.execute("DELETE FROM tournaments WHERE tournament_id = %s", (tournament_id,))
+    conn.commit()
+    print("Tournament deleted." if cur.rowcount else "No tournament with that ID.")
+    cur.close()
 
 #tournament menu 
 def tournaments_menu(conn):
@@ -188,6 +199,7 @@ def tournaments_menu(conn):
         print("3. Schedule Match")
         print("4. Declare Match Winner")
         print("5. Delete Match")
+        print("6. Delete Tournament")
         print("0. Back")
         choice = input("Choose: ").strip()
         if choice == "1":
@@ -200,6 +212,8 @@ def tournaments_menu(conn):
             declare_match_winner(conn)
         elif choice == "5":
             delete_match(conn)
+        elif choice == "6":
+            delete_tournament(conn)
         elif choice == "0":
             break
         else:
