@@ -143,14 +143,51 @@ def view_team_roster(conn):
     for pid, pname, game in players:
         print(f"{pid:<5}{pname:<25}{game:<20}")
 
+def update_team(conn):
+    if not view_teams(conn):
+        return
+    team_id = input("Team ID to update: ").strip()
+    if not team_id.isdigit():
+        print("Enter a valid number.")
+        return
+
+    cur = conn.cursor()
+    cur.execute("SELECT team_name, game FROM teams WHERE team_id = %s", (team_id,))
+    row = cur.fetchone()
+    if row is None:
+        print("No team with that ID.")
+        cur.close()
+        return
+    current_name, current_game = row
+
+    print("Leave blank to keep the current value.")
+    new_name = input(f"New team name [{current_name}]: ").strip()
+    new_game = input(f"New game [{current_game}]: ").strip()
+
+    name = new_name if new_name else current_name
+    game = new_game if new_game else current_game
+
+    try:
+        cur.execute(
+            "UPDATE teams SET team_name = %s, game = %s WHERE team_id = %s",
+            (name, game, team_id),
+        )
+        conn.commit()
+        print("Team updated." if cur.rowcount else "No changes made.")
+    except mysql.connector.Error as e:
+        print("Error:", e)
+    finally:
+        cur.close()
+
 def teams_menu(conn):
     while True:
         print("\n--- Team Management ---")
         print("1. Create Team")
         print("2. View All Teams")
         print("3. View Team Roster")
-        print("4. Assign Player to Team")
-        print("5. Delete Team")
+        print("4. Update Team")
+        print("5. Assign Player to Team")
+        print("6. Delete Team")
         print("0. Back")
         choice = input("Choose: ").strip()
         if choice == "1":
@@ -160,8 +197,10 @@ def teams_menu(conn):
         elif choice == "3":
             view_team_roster(conn)
         elif choice == "4":
-            assign_player_to_team(conn)
+            update_team(conn)
         elif choice == "5":
+            assign_player_to_team(conn)
+        elif choice == "6":
             delete_team(conn)
         elif choice == "0":
             break

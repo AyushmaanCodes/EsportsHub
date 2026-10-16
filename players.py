@@ -109,6 +109,42 @@ def delete_player(conn):
     print("Player deleted." if cur.rowcount else "No player with that ID.")
     cur.close()
 
+def update_player(conn):
+    if not view_players(conn):
+        return
+    player_id = input("Player ID to update: ").strip()
+    if not player_id.isdigit():
+        print("Enter a valid number.")
+        return
+
+    cur = conn.cursor()
+    cur.execute("SELECT player_name, game FROM players WHERE player_id = %s", (player_id,))
+    row = cur.fetchone()
+    if row is None:
+        print("No player with that ID.")
+        cur.close()
+        return
+    current_name, current_game = row
+
+    print("Leave blank to keep the current value.")
+    new_name = input(f"New player name [{current_name}]: ").strip()
+    new_game = input(f"New game [{current_game}]: ").strip()
+
+    name = new_name if new_name else current_name
+    game = new_game if new_game else current_game
+
+    try:
+        cur.execute(
+            "UPDATE players SET player_name = %s, game = %s WHERE player_id = %s",
+            (name, game, player_id),
+        )
+        conn.commit()
+        print("Player updated." if cur.rowcount else "No changes made.")
+    except mysql.connector.Error as e:
+        print("Error:", e)
+    finally:
+        cur.close()
+
 
 def players_menu(conn):
     while True:
@@ -116,7 +152,8 @@ def players_menu(conn):
         print("1. Register New Player")
         print("2. View All Players")
         print("3. Search Player")
-        print("4. Delete Player")
+        print("4. Update Player")
+        print("5. Delete Player")
         print("0. Back")
         choice = input("Choose: ").strip()
         if choice == "1":
@@ -126,6 +163,8 @@ def players_menu(conn):
         elif choice == "3":
             search_player(conn)
         elif choice == "4":
+            update_player(conn)
+        elif choice == "5":
             delete_player(conn)
         elif choice == "0":
             break

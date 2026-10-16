@@ -9,11 +9,14 @@ def show_leaderboard(conn):
     cur = conn.cursor()
     cur.execute(
         """
-        SELECT t.team_id, t.team_name, t.game, COUNT(m.match_id) AS wins
+        SELECT t.team_id, t.team_name, t.game,
+        SUM(CASE WHEN m.winner_id = t.team_id THEN 1 ELSE 0 END) AS wins,
+        SUM(CASE WHEN m.winner_id IS NOT NULL AND m.winner_id != t.team_id THEN 1 ELSE 0 END) AS losses
         FROM teams t
-        LEFT JOIN matches m ON m.winner_id = t.team_id
+        LEFT JOIN matches m
+        ON (m.team1_id = t.team_id OR m.team2_id = t.team_id) AND m.winner_id IS NOT NULL
         GROUP BY t.team_id, t.team_name, t.game
-        ORDER BY wins DESC, t.team_name ASC
+        ORDER BY wins DESC, losses ASC, t.team_name ASC
         """
     )
     rows = cur.fetchall()
@@ -21,6 +24,9 @@ def show_leaderboard(conn):
     if not rows:
         print("No teams yet.")
         return
-    print(f"\n{'Rank':<6}{'Team':<25}{'Game':<20}{'Wins':<6}")
-    for rank, (team_id, team_name, game, wins) in enumerate(rows, start=1):
-        print(f"{rank:<6}{team_name:<25}{game:<20}{wins:<6}")
+
+    print(f"\n{'Rank':<6}{'Team':<22}{'Game':<15}{'P':<5}{'W':<5}{'L':<5}{'Win%':<8}")
+    for rank, (team_id, team_name, game, wins, losses) in enumerate(rows, start=1):
+        played = wins + losses
+        win_pct = (wins / played * 100) if played else 0.0
+        print(f"{rank:<6}{team_name:<22}{game:<15}{played:<5}{wins:<5}{losses:<5}{win_pct:<8.1f}")

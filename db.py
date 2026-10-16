@@ -1,16 +1,31 @@
 import mysql.connector
 import os
 
-#Reads the MySQL password from a local file, or asks once and saves it
+#Returns True if this password actually connects to MySQL, False otherwise.
+def try_password(pwd):
+    try:
+        conn = mysql.connector.connect(host="localhost", user="root", password=pwd)
+        conn.close()
+        return True
+    except mysql.connector.Error:
+        return False
+
+#Reads a saved MySQL password, or keeps asking until one actually works, then saves it
 def get_password():
     if os.path.exists("db_password.txt"):
         with open("db_password.txt", "r") as f:
-            return f.read().strip()
-    else:
-        pwd = input("First-time setup, enter your MySQL root password: ").strip()
-        with open("db_password.txt", "w") as f:
-            f.write(pwd)
-        return pwd
+            saved = f.read().strip()
+        if try_password(saved):
+            return saved
+        print("Saved password no longer works.")
+
+    while True:
+        pwd = input("Enter your MySQL root password: ").strip()
+        if try_password(pwd):
+            with open("db_password.txt", "w") as f:
+                f.write(pwd)
+            return pwd
+        print("Wrong password. Try again.")
 
 
 def get_db_config():
@@ -19,6 +34,7 @@ def get_db_config():
         "user": "root",
         "password": get_password(),
     }
+
 
 #Creates database and tables automatically if they don't exist
 def init_db():

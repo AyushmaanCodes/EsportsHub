@@ -190,16 +190,58 @@ def delete_tournament(conn):
     print("Tournament deleted." if cur.rowcount else "No tournament with that ID.")
     cur.close()
 
+def update_tournament(conn):
+    if not view_tournaments(conn):
+        return
+    tournament_id = input("Tournament ID to update: ").strip()
+    if not tournament_id.isdigit():
+        print("Enter a valid number.")
+        return
+
+    cur = conn.cursor()
+    cur.execute(
+        "SELECT tournament_name, game, tournament_date FROM tournaments WHERE tournament_id = %s",
+        (tournament_id,),
+    )
+    row = cur.fetchone()
+    if row is None:
+        print("No tournament with that ID.")
+        cur.close()
+        return
+    current_name, current_game, current_date = row
+
+    print("Leave blank to keep the current value.")
+    new_name = input(f"New tournament name [{current_name}]: ").strip()
+    new_game = input(f"New game [{current_game}]: ").strip()
+    new_date = input(f"New date [{current_date}] (YYYY-MM-DD): ").strip()
+
+    name = new_name if new_name else current_name
+    game = new_game if new_game else current_game
+    date = new_date if new_date else current_date
+
+    try:
+        cur.execute(
+            "UPDATE tournaments SET tournament_name = %s, game = %s, tournament_date = %s WHERE tournament_id = %s",
+            (name, game, date, tournament_id),
+        )
+        conn.commit()
+        print("Tournament updated." if cur.rowcount else "No changes made.")
+    except mysql.connector.Error as e:
+        print("Error:", e)
+    finally:
+        cur.close()
+
 #tournament menu 
 def tournaments_menu(conn):
     while True:
         print("\n--- Tournament & Match Management ---")
         print("1. Create Tournament")
         print("2. View All Tournaments")
-        print("3. Schedule Match")
-        print("4. Declare Match Winner")
-        print("5. Delete Match")
-        print("6. Delete Tournament")
+        print("3. Update Tournament")
+        print("4. Schedule Match")
+        print("5. Declare Match Winner")
+        print("6. Delete Match")
+        print("7. Delete Tournament")
         print("0. Back")
         choice = input("Choose: ").strip()
         if choice == "1":
@@ -207,12 +249,14 @@ def tournaments_menu(conn):
         elif choice == "2":
             view_tournaments(conn)
         elif choice == "3":
-            schedule_match(conn)
+            update_tournament(conn)
         elif choice == "4":
-            declare_match_winner(conn)
+            schedule_match(conn)
         elif choice == "5":
-            delete_match(conn)
+            declare_match_winner(conn)
         elif choice == "6":
+            delete_match(conn)
+        elif choice == "7":
             delete_tournament(conn)
         elif choice == "0":
             break
