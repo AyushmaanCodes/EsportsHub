@@ -1,13 +1,13 @@
 CREATE DATABASE IF NOT EXISTS esportshub;
 USE esportshub;
 
-CREATE TABLE teams (
+CREATE TABLE IF NOT EXISTS teams (
     team_id INT AUTO_INCREMENT PRIMARY KEY,
     team_name VARCHAR(50) NOT NULL UNIQUE,
     game VARCHAR(50) NOT NULL
 );
 
-CREATE TABLE players (
+CREATE TABLE IF NOT EXISTS players (
     player_id INT AUTO_INCREMENT PRIMARY KEY,
     player_name VARCHAR(50) NOT NULL,
     game VARCHAR(50) NOT NULL,
@@ -15,14 +15,14 @@ CREATE TABLE players (
     FOREIGN KEY (team_id) REFERENCES teams(team_id) ON DELETE SET NULL
 );
 
-CREATE TABLE tournaments (
+CREATE TABLE IF NOT EXISTS tournaments (
     tournament_id INT AUTO_INCREMENT PRIMARY KEY,
     tournament_name VARCHAR(80) NOT NULL,
     game VARCHAR(50) NOT NULL,
     tournament_date DATE NOT NULL
 );
 
-CREATE TABLE matches (
+CREATE TABLE IF NOT EXISTS matches (
     match_id INT AUTO_INCREMENT PRIMARY KEY,
     tournament_id INT NOT NULL,
     team1_id INT NOT NULL,
